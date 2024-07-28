@@ -11,20 +11,20 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type AdGrpcService struct {
+type AdGrpcServer struct {
 	adStore AdStore
 	pb.UnimplementedAdServiceServer
 	logger *log.Logger
 }
 
-func NewAdGrpcService(logger *log.Logger, adStore AdStore) *AdGrpcService {
-	return &AdGrpcService{
+func NewAdGrpcServer(logger *log.Logger, adStore AdStore) *AdGrpcServer {
+	return &AdGrpcServer{
 		adStore: adStore,
 		logger:  logger,
 	}
 }
 
-func (s *AdGrpcService) GetAds(ctx context.Context, req *pb.GetAdRequest) (*pb.GetAdResponse, error) {
+func (s *AdGrpcServer) GetAds(ctx context.Context, req *pb.GetAdRequest) (*pb.GetAdResponse, error) {
 
 	s.logger.Infof("received ad request (context_words=%v)", req.ContextKeys)
 
@@ -44,10 +44,10 @@ func (s *AdGrpcService) GetAds(ctx context.Context, req *pb.GetAdRequest) (*pb.G
 	return res, nil
 }
 
-func (p *AdGrpcService) Check(ctx context.Context, req *healthpb.HealthCheckRequest) (*healthpb.HealthCheckResponse, error) {
+func (p *AdGrpcServer) Check(ctx context.Context, req *healthpb.HealthCheckRequest) (*healthpb.HealthCheckResponse, error) {
 	return &healthpb.HealthCheckResponse{Status: healthpb.HealthCheckResponse_SERVING}, nil
 }
 
-func (p *AdGrpcService) Watch(req *healthpb.HealthCheckRequest, ws healthpb.Health_WatchServer) error {
+func (p *AdGrpcServer) Watch(req *healthpb.HealthCheckRequest, ws healthpb.Health_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "health check via Watch not implemented")
 }

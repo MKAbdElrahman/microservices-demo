@@ -39,10 +39,10 @@ func main() {
 	reflection.Register(srv)
 
 	adStore := NewInMemorydStore()
-	svc := NewAdGrpcService(logger, adStore)
+	adServicServer := NewAdGrpcServer(logger, adStore)
+	pb.RegisterAdServiceServer(srv, adServicServer)
 
-	pb.RegisterAdServiceServer(srv, svc)
-	healthpb.RegisterHealthServer(srv, svc)
+	healthpb.RegisterHealthServer(srv, adServicServer)
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
 	defer cancel()
