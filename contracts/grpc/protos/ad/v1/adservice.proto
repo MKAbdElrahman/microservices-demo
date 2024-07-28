@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package ad.v1;
+
+
+option go_package = "demo/contracts/grpc/gen/ad/v1;adv1";
+
+
+service AdService {
+    rpc GetAd(GetAdRequest) returns (GetAdResponse) {}
+}
+
+message GetAdRequest {
+    // List of important key words from the current page describing the context.
+    repeated string context_keys = 1;
+}
+
+message GetAdResponse {
+    repeated Ad ads = 1;
+}
+
+message Ad {
+    // url to redirect to when an ad is clicked.
+    string redirect_url = 1;
+
+    // short advertisement text to display.
+    string text = 2;
+}

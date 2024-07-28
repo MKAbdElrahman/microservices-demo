@@ -1,0 +1,7 @@
+### Get Ad
+POST http://localhost:{{$dotenv AD_SERVICE_PORT}}/ad.v1.AdService/GetAd
+Content-Type: application/json
+
+{
+  "context_keys": ["clothing", "accessories"]
+}
