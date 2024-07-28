@@ -7,7 +7,7 @@ option go_package = "demo/contracts/grpc/gen/ad/v1;adv1";
 
 
 service AdService {
-    rpc GetAd(GetAdRequest) returns (GetAdResponse) {}
+    rpc GetAds(GetAdRequest) returns (GetAdResponse) {}
 }
 
 message GetAdRequest {

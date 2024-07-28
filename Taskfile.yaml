@@ -1,4 +1,6 @@
 version: 3
 dotenv: [.env]
 tasks:
-  run: go run ./src/services/ad/
+  install-grpcurl: go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
+  run-ad-service: go run ./src/services/ad/
+

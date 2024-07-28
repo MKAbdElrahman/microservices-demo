@@ -1,7 +1,0 @@
-### Health
-POST http://localhost:{{$dotenv AD_SERVICE_PORT}}/grpc.health.v1.Health/Check
-Content-Type: application/json
-
-{
-    "service": "ad.v1.AdService"
-}

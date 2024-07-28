@@ -1,17 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"net/http"
+	"net"
 	"os"
+	"os/signal"
+	"syscall"
+
+	pb "demo/contracts/grpc/gen/ad/v1"
 
 	"github.com/charmbracelet/log"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
-
-	"demo/contracts/grpc/gen/ad/v1/adv1connect"
-
-	"connectrpc.com/grpchealth"
+	"google.golang.org/grpc"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/reflection"
 )
 
 func main() {
@@ -26,23 +28,33 @@ func main() {
 		ReportTimestamp: true,
 	})
 
+	logger.Infof("AdService gRPC server started on port: %s", port)
+
+	ln, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
+	if err != nil {
+		logger.Fatalf("TCP Listen: %v", err)
+	}
+
+	srv := grpc.NewServer()
+	reflection.Register(srv)
+
 	adStore := NewInMemorydStore()
-	adService := NewAdGrpcService(adStore)
+	svc := NewAdGrpcService(logger, adStore)
 
-	mux := http.NewServeMux()
+	pb.RegisterAdServiceServer(srv, svc)
+	healthpb.RegisterHealthServer(srv, svc)
 
-	path, handler := adv1connect.NewAdServiceHandler(adService)
-	checker := grpchealth.NewStaticChecker(
-		adv1connect.AdServiceName,
-	)
-	// checker.SetStatus(adv1connect.AdServiceName, grpchealth.StatusNotServing)
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
+	defer cancel()
 
-	mux.Handle(grpchealth.NewHandler(checker))
-	mux.Handle(path, handler)
+	go func() {
+		if err := srv.Serve(ln); err != nil {
+			logger.Fatalf("Failed to serve gRPC server, err: %v", err)
+		}
+	}()
 
-	logger.Infof("Ad Service started, listening on %s", port)
-	http.ListenAndServe(
-		fmt.Sprintf(":%s", port),
-		h2c.NewHandler(mux, &http2.Server{}),
-	)
+	<-ctx.Done()
+
+	srv.GracefulStop()
+	logger.Info("ProductCatalogService gRPC server stopped")
 }

@@ -2,44 +2,52 @@ package main
 
 import (
 	"context"
-	"log"
-	"os"
 
-	"connectrpc.com/connect"
+	pb "demo/contracts/grpc/gen/ad/v1"
 
-	adv1 "demo/contracts/grpc/gen/ad/v1"
-)
-
-var (
-	logger = log.New(os.Stdout, "AdService: ", log.LstdFlags)
+	"github.com/charmbracelet/log"
+	"google.golang.org/grpc/codes"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/status"
 )
 
 type AdGrpcService struct {
 	adStore AdStore
+	pb.UnimplementedAdServiceServer
+	logger *log.Logger
 }
 
-func NewAdGrpcService(adStore AdStore) *AdGrpcService {
+func NewAdGrpcService(logger *log.Logger, adStore AdStore) *AdGrpcService {
 	return &AdGrpcService{
 		adStore: adStore,
+		logger:  logger,
 	}
 }
 
-func (s *AdGrpcService) GetAd(ctx context.Context, req *connect.Request[adv1.GetAdRequest]) (*connect.Response[adv1.GetAdResponse], error) {
+func (s *AdGrpcService) GetAds(ctx context.Context, req *pb.GetAdRequest) (*pb.GetAdResponse, error) {
 
-	logger.Printf("received ad request (context_words=%v)", req.Msg.ContextKeys)
+	s.logger.Infof("received ad request (context_words=%v)", req.ContextKeys)
 
-	allAds := s.adStore.GetAdsByCategory(req.Msg.ContextKeys)
+	allAds := s.adStore.GetAdsByCategory(req.ContextKeys)
 
-	pbAds := make([]*adv1.Ad, len(allAds))
+	pbAds := make([]*pb.Ad, len(allAds))
 	for i, ad := range allAds {
-		pbAds[i] = &adv1.Ad{
+		pbAds[i] = &pb.Ad{
 			RedirectUrl: ad.RedirectUrl,
 			Text:        ad.Text,
 		}
 	}
-	res := connect.NewResponse(&adv1.GetAdResponse{
+	res := &pb.GetAdResponse{
 		Ads: pbAds,
-	})
+	}
 
 	return res, nil
+}
+
+func (p *AdGrpcService) Check(ctx context.Context, req *healthpb.HealthCheckRequest) (*healthpb.HealthCheckResponse, error) {
+	return &healthpb.HealthCheckResponse{Status: healthpb.HealthCheckResponse_SERVING}, nil
+}
+
+func (p *AdGrpcService) Watch(req *healthpb.HealthCheckRequest, ws healthpb.Health_WatchServer) error {
+	return status.Errorf(codes.Unimplemented, "health check via Watch not implemented")
 }

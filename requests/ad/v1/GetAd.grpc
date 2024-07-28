@@ -1,0 +1,1 @@
+grpcurl -d '{"context_keys": ["clothing"]}'  -plaintext localhost:9556 ad.v1.AdService/GetAds
